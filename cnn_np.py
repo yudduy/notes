@@ -1,7 +1,5 @@
 import numpy as numpy
 
-# GAVE UP AFTER INIT D:
-
 ### input volume descriptors
 # in_channels = dimension of feature (image = RBG (3))
 # height/width of input images
