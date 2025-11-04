@@ -121,3 +121,35 @@ class Transformer:
         self.decoder_blocks = [DecoderBlock(d_model, num_heads, d_ff) for _ in range(num_layers)]
         self.final_norm = LayerNorm(d_model)
         self.final_proj = np.random.randn(d_model, vocab_size) * 0.01
+    
+    def forward(self, x, encoder_output=None, self_attn_mask=None, encoder_attn_mask=None):
+
+        x = self.embedding.forward(x)
+        x = self.pos_enc.forward(x)
+
+        # stack blocks (6, 12, 24) -> basic to abstract patterns (enrich representation)
+        for block in self.decoder_blocks:
+            x = block.forward(x, encoder_output, self_attn_mask, encoder_attn_mask)
+
+        x = self.final_norm.forward(x)
+        # project to vocab
+        return np.dot(x, self.final_proj)
+
+    def generate_mask(self, seq):
+        seq_len = seq.shape[1]
+        mask = np.triu(np.ones((seq_len, seq_len)) * -np.inf, k=1)
+        return mask
+
+if __name__ == "__main__":
+    vocab_size = 10000
+    d_model = 512
+    num_layers = 6
+    num_heads = 8
+    d_ff = 2048 # dimension of feed-forward network hidden layers (expand -> computational cap)
+    max_len = 100
+
+    transformer = Transformer(vocab_size, d_model, num_layers, num_heads, d_ff, max_len)
+    input_ids = np.array([[1, 2, 3, 4]])
+    self_attn_mask = transformer.generate_mask(input_ids)
+    output = transformer.forward(input_ids, self_attn_mask=self_attn_mask)
+    print(output.shape)
